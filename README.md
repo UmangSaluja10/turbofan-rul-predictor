@@ -1,110 +1,190 @@
-# Turbofan Engine RUL Predictor
+# ✈️ Predictive Maintenance using NASA CMAPSS Dataset
 
-End-to-end AI application that predicts the **Remaining Useful Life (RUL)**
-of a jet engine from sensor readings, using NASA's CMAPSS dataset.
-Model trained from scratch (RandomForestRegressor) — no pretrained models used.
+## 📌 Overview
+This project focuses on **Remaining Useful Life (RUL) prediction** for jet engines using sensor data from NASA’s CMAPSS (Commercial Modular Aero-Propulsion System Simulation) dataset. The goal is to build a machine learning model that can estimate how many operational cycles an engine has left before failure, enabling **proactive maintenance**.
 
-## Project Structure
-```
-turbofan-rul-project/
-├── data/                  <- put train_FD001.txt, test_FD001.txt, RUL_FD001.txt here
+---
+
+## 🚀 Problem Statement
+Traditional maintenance strategies are:
+- **Reactive** (fix after failure)
+- **Preventive** (scheduled, but inefficient)
+
+This project implements a **predictive maintenance system** using sensor data to:
+- Predict **RUL (in cycles)**
+- Classify engine health into:
+  - ✅ Healthy
+  - ⚠️ Warning
+  - ❌ Critical
+
+---
+
+## 📂 Dataset
+- **Source**: NASA CMAPSS Turbofan Engine Degradation Dataset  
+- **Type**: Multivariate time-series (converted to tabular format)
+- **Characteristics**:
+  - 100 engines (FD001 subset)
+  - 20+ sensor readings per cycle
+  - No missing values
+  - Clean and ready-to-use
+
+---
+
+## 🧠 Methodology
+
+### Step 1: Exploratory Data Analysis (EDA)
+- Checked dataset shape and structure
+- Verified missing values (none found)
+- Analyzed sensor variance
+- Dropped constant / near-constant sensors:
+sensor_1, sensor_19, sensor_18, sensor_10,
+sensor_16, sensor_5, sensor_6
+- Generated:
+- Sensor trend plots
+- Correlation heatmap
+
+---
+
+### Step 2: Feature Engineering
+- Selected 17 meaningful features:
+op_setting_1, op_setting_2, op_setting_3,
+sensor_2, sensor_3, sensor_4, sensor_7,
+sensor_8, sensor_9, sensor_11, sensor_12,
+sensor_13, sensor_14, sensor_15,
+sensor_17, sensor_20, sensor_21
+
+- Applied **StandardScaler** for normalization
+
+---
+
+### Step 3: Model Training
+- Model: **RandomForestRegressor**
+- Training: From scratch (no pretrained models)
+- Advantages:
+- Handles nonlinear relationships
+- Robust to noise
+- Fast training (CPU-friendly)
+
+---
+
+### Step 4: Evaluation
+
+| Metric | Value |
+|------|------|
+| MAE  | 12.22 cycles |
+| RMSE | 17.27 cycles |
+| R²   | 0.814 |
+
+---
+
+### Step 5: Feature Importance (Top 10)
+
+| Feature     | Importance |
+|------------|-----------|
+| sensor_11  | 0.6388 |
+| sensor_9   | 0.1345 |
+| sensor_4   | 0.0693 |
+| sensor_12  | 0.0411 |
+| sensor_7   | 0.0208 |
+| sensor_14  | 0.0199 |
+| sensor_15  | 0.0147 |
+| sensor_21  | 0.0100 |
+| sensor_13  | 0.0097 |
+| sensor_2   | 0.0093 |
+
+---
+
+## 🏗️ Project Structure
+major_project/
+│
+├── backend/
+│ └── main.py # FastAPI backend (prediction API)
+│
+├── frontend/
+│ └── index.html # Simple UI for user input
+│
+├── data/
+│ └── train_FD001.txt # Dataset
+│
+├── models/
+│ ├── model.pkl # Trained model
+│ ├── scaler.pkl # Feature scaler
+│ └── features.json # Feature list
+│
 ├── notebooks/
-│   └── eda.py             <- exploratory data analysis
-├── models/                <- saved model.pkl, scaler.pkl (auto-generated)
-├── train_model.py         <- preprocessing + training + evaluation
-├── backend/                (added in next step)
-├── frontend/                (added in next step)
+│ ├── eda.py # Data analysis script
+│ └── plots/ # Generated plots
+│
+├── train_model.py # Model training script
 ├── requirements.txt
 └── README.md
-```
 
-## Setup (do this once)
+---
 
-1. **Install VS Code** (if not already) and the **Python extension** (Microsoft).
-2. Open this folder in VS Code: `File > Open Folder`.
-3. Open a terminal in VS Code: `` Terminal > New Terminal `` (or Ctrl+`).
-4. Create and activate a virtual environment:
+## ⚙️ Installation & Setup
 
-   **Windows:**
-   ```
-   python -m venv venv
-   venv\Scripts\activate
-   ```
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/predictive-maintenance-rul.git
+cd predictive-maintenance-rul
 
-   **Mac/Linux:**
-   ```
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-   You should now see `(venv)` at the start of your terminal prompt.
+2. Create virtual environment
+python -m venv venv
+venv\Scripts\activate   # Windows
 
-5. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-6. Download the dataset — follow `data/README_DATA.md`. You need
-   `train_FD001.txt`, `test_FD001.txt`, `RUL_FD001.txt` inside the `data/` folder.
-
-## Step 1: Run EDA
-
-```
+3. Install dependencies
+pip install -r requirements.txt
+▶️ Usage
+Run EDA
 python notebooks/eda.py
-```
-
-This prints dataset stats to the terminal and saves plots to `notebooks/plots/`.
-Open those PNGs in VS Code's file explorer to view them. Skim the printed
-sensor variances — this tells you which sensors are "dead" (constant) and
-safe to drop, which the training script already handles.
-
-## Step 2: Train and evaluate the model
-
-```
+Train Model
 python train_model.py
-```
+Start Backend (FastAPI)
+uvicorn backend.main:app --reload
+Open Frontend
 
-This will:
-- Load and preprocess the data
-- Compute RUL labels (capped at 125 cycles — standard practice for this dataset)
-- Scale features
-- Train a RandomForestRegressor **from scratch**
-- Evaluate on NASA's official test set and print MAE / RMSE / R²
-- Save `models/rul_model.pkl`, `models/scaler.pkl`, `models/feature_columns.pkl`
+Open frontend/index.html in your browser.
 
-**What to expect:** MAE typically lands somewhere around 15–25 cycles on
-FD001 with this setup — good enough for a project demo, and you can quote
-the exact number from your run in your technical report.
+🔌 API Endpoint
+POST /predict
 
-## Git / GitHub
+Request Body:
 
-Initialize the repo once you're happy with this stage:
-```
-git init
-git add .
-git commit -m "EDA + trained RUL model"
-```
+{
+  "sensor_2": 641.82,
+  "sensor_3": 1589.70,
+  ...
+}
 
-Add a `.gitignore` (create this file in the project root) with:
-```
-venv/
-__pycache__/
-*.pyc
-data/*.txt
-models/*.pkl
-```
-(We exclude the raw data files and trained model from git since they're
-large/regeneratable — mention in your README how to regenerate them.
-If your instructor wants the model file included, remove that line.)
+Response:
 
-Then push to GitHub:
-```
-git remote add origin <your-repo-url>
-git branch -M main
-git push -u origin main
-```
+{
+  "predicted_rul": 145.3,
+  "status": "Warning",
+  "message": "Engine nearing maintenance window"
+}
+🌍 Real-World Impact
+Reduces unexpected engine failures
+Optimizes maintenance scheduling
+Saves operational costs
+Improves safety in aviation and industry
+🔮 Future Improvements
+Use XGBoost or LightGBM for better accuracy
+Add time-series models (LSTM)
+Deploy on cloud (AWS / Azure)
+Build interactive dashboard (React)
+👨‍💻 Author
 
-## Next steps
-Once `train_model.py` runs successfully and you're happy with the metrics,
-come back and I'll give you the **FastAPI backend** (`backend/`) that loads
-`models/rul_model.pkl` and serves a `/predict` endpoint, followed by the
-**frontend** (`frontend/`) that calls it.
+Umang Saluja
+
+📜 License
+
+This project is open-source and available under the MIT License.
+
+
+If you want, I can also:
+1. :contentReference[oaicite:0]{index=0}
+2. :contentReference[oaicite:1]{index=1}
+3. :contentReference[oaicite:2]{index=2}
+
+Just tell me.
