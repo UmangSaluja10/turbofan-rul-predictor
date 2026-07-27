@@ -9,8 +9,5 @@ __pycache__/
 # Data files
 data/*.txt
 
-# ML models
-models/*.pkl
-
 # OS files
 .DS_Store
