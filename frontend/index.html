@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUL-1 · Engine Health Instrument</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d10;
+    --panel: #12161b;
+    --panel-raised: #171c22;
+    --line: #262d35;
+    --line-bright: #3a4552;
+    --text: #dfe6ec;
+    --muted: #6b7684;
+    --amber: #ffb020;
+    --green: #35d68a;
+    --red: #ff5555;
+    --cyan: #4dd8e6;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse at top, #10151a 0%, var(--bg) 55%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 28px 18px 60px;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark { width: 34px; height: 34px; flex-shrink: 0; }
+  .brand-text h1 {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 0;
+    color: #f2f5f8;
+  }
+  .brand-text p {
+    margin: 2px 0 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+  .conn-status {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+  }
+  .conn-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .panel-title b { color: var(--cyan); }
+
+  .presets { display: flex; gap: 6px; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.03em;
+    background: transparent;
+    border: 1px solid var(--line-bright);
+    color: var(--muted);
+    padding: 5px 9px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .chip:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  .group { margin-bottom: 16px; }
+  .group-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    border-left: 2px solid var(--line-bright);
+    padding-left: 8px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 520px) { .field-row { grid-template-columns: repeat(2, 1fr); } }
+
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+    margin-bottom: 3px;
+    letter-spacing: 0.02em;
+  }
+  .field input {
+    width: 100%;
+    background: #0d1116;
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 7px 8px;
+    border-radius: 3px;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 1px var(--cyan);
+  }
+
+  .run-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 13px;
+    background: var(--cyan);
+    color: #06181c;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+  }
+  .run-btn:hover { background: #6ee3ee; }
+  .run-btn:active { transform: scale(0.99); }
+  .run-btn:disabled { background: var(--line-bright); color: var(--muted); cursor: not-allowed; }
+
+  .gauge-panel { position: sticky; top: 18px; text-align: center; }
+  .gauge-svg { width: 100%; max-width: 320px; margin: 4px auto 0; display: block; }
+
+  .needle {
+    transform-origin: 160px 160px;
+    transition: transform 1s cubic-bezier(.22,1,.36,1);
+  }
+
+  .readout {
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 2.6rem;
+    color: #f4f8fa;
+    margin-top: -46px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .readout-unit {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .status-line {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+  .status-line .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .st-healthy { color: var(--green); border-color: var(--green); background: rgba(53,214,138,0.08); }
+  .st-healthy .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .st-warning { color: var(--amber); border-color: var(--amber); background: rgba(255,176,32,0.08); }
+  .st-warning .dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .st-critical { color: var(--red); border-color: var(--red); background: rgba(255,85,85,0.08); }
+  .st-critical .dot { background: var(--red); box-shadow: 0 0 6px var(--red); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  .message {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+    padding: 0 8px;
+  }
+
+  .placeholder {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: var(--mono);
+    padding: 10px 8px 0;
+  }
+
+  .error-box {
+    margin-top: 14px;
+    background: rgba(255,85,85,0.08);
+    border: 1px solid var(--red);
+    color: #ffb3b3;
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  .footnote {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="#3a4552" stroke-width="1"/>
+        <circle cx="20" cy="20" r="3.2" fill="#4dd8e6"/>
+        <path d="M20 20 L20 5 A15 15 0 0 1 33 12 Z" fill="#1a2129"/>
+        <path d="M20 20 L33 12 A15 15 0 0 1 33 28 Z" fill="#212a33"/>
+        <path d="M20 20 L33 28 A15 15 0 0 1 20 35 Z" fill="#1a2129"/>
+        <path d="M20 20 L20 35 A15 15 0 0 1 7 28 Z" fill="#212a33"/>
+        <path d="M20 20 L7 28 A15 15 0 0 1 7 12 Z" fill="#1a2129"/>
+        <path d="M20 20 L7 12 A15 15 0 0 1 20 5 Z" fill="#212a33"/>
+      </svg>
+      <div class="brand-text">
+        <h1>RUL-1 INSTRUMENT</h1>
+        <p>Turbofan remaining-life estimator &middot; scratch-trained model, NASA C-MAPSS FD001</p>
+      </div>
+    </div>
+    <div class="conn-status"><span class="conn-dot"></span> API 127.0.0.1:8000</div>
+  </header>
+
+  <div class="grid">
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Sensor Input &middot; <b>17 Channels</b></div>
+        <div class="presets">
+          <button class="chip" type="button" onclick="loadPreset('healthy')">HEALTHY SAMPLE</button>
+          <button class="chip" type="button" onclick="loadPreset('degraded')">DEGRADED SAMPLE</button>
+        </div>
+      </div>
+
+      <div id="form-groups"></div>
+
+      <button class="run-btn" id="submit-btn" onclick="handlePredict()">Run Prediction</button>
+    </div>
+
+    <div class="panel gauge-panel">
+      <div class="panel-title" style="text-align:left; margin-bottom:2px;">Remaining Useful Life</div>
+
+      <svg class="gauge-svg" viewBox="0 0 320 190">
+        <path d="M 30 160 A 130 130 0 0 1 82.7 54.4" fill="none" stroke="#ff5555" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+        <path d="M 82.7 54.4 A 130 130 0 0 1 152.8 30.6" fill="none" stroke="#ffb020" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+        <path d="M 152.8 30.6 A 130 130 0 0 1 290 160" fill="none" stroke="#35d68a" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+
+        <text x="24" y="180" fill="#6b7684" font-family="JetBrains Mono" font-size="10">0</text>
+        <text x="150" y="20" fill="#6b7684" font-family="JetBrains Mono" font-size="10">62</text>
+        <text x="278" y="180" fill="#6b7684" font-family="JetBrains Mono" font-size="10">125</text>
+
+        <g class="needle" id="needle">
+          <line x1="160" y1="160" x2="160" y2="45" stroke="#f4f8fa" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <circle cx="160" cy="160" r="8" fill="#0d1116" stroke="#4dd8e6" stroke-width="2"/>
+      </svg>
+
+      <div id="result-area">
+        <div class="placeholder">AWAITING INPUT&hellip;</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footnote">MODEL: RANDOMFOREST (SCRATCH-TRAINED) &nbsp;&middot;&nbsp; MAE 12.2 CYCLES &nbsp;&middot;&nbsp; R&sup2; 0.814</div>
+</div>
+
+<script>
+const GROUPS = [
+  ["Operating Settings", ["op_setting_1", "op_setting_2", "op_setting_3"]],
+  ["Temperature Sensors", ["sensor_2", "sensor_3", "sensor_4"]],
+  ["Pressure Sensors", ["sensor_7", "sensor_11", "sensor_15"]],
+  ["Speed / Flow / Ratio Sensors", ["sensor_8", "sensor_9", "sensor_12", "sensor_13", "sensor_14", "sensor_17", "sensor_20", "sensor_21"]]
+];
+
+const FEATURES = GROUPS.flatMap(g => g[1]);
+const API_URL = "http://127.0.0.1:8000/predict";
+const RUL_CAP = 125;
+
+const PRESETS = {
+  healthy: {
+    op_setting_1: -0.0007, op_setting_2: 0.0004, op_setting_3: 100.0,
+    sensor_2: 641.8, sensor_3: 1583.8, sensor_4: 1396.6, sensor_7: 554.3,
+    sensor_8: 2388.0, sensor_9: 9046.2, sensor_11: 47.2, sensor_12: 521.9,
+    sensor_13: 2388.0, sensor_14: 8130.9, sensor_15: 8.42, sensor_17: 392,
+    sensor_20: 39.0, sensor_21: 23.42
+  },
+  degraded: {
+    op_setting_1: -0.0016, op_setting_2: -0.0004, op_setting_3: 100.0,
+    sensor_2: 644.3, sensor_3: 1603.5, sensor_4: 1428.6, sensor_7: 551.4,
+    sensor_8: 2388.2, sensor_9: 9065.6, sensor_11: 48.3, sensor_12: 519.4,
+    sensor_13: 2388.2, sensor_14: 8137.6, sensor_15: 8.56, sensor_17: 397,
+    sensor_20: 38.5, sensor_21: 22.9
+  }
+};
+
+function buildForm() {
+  const container = document.getElementById("form-groups");
+  container.innerHTML = "";
+  GROUPS.forEach(([label, fields]) => {
+    const group = document.createElement("div");
+    group.className = "group";
+    const heading = document.createElement("div");
+    heading.className = "group-label";
+    heading.textContent = label;
+    group.appendChild(heading);
+
+    const row = document.createElement("div");
+    row.className = "field-row";
+    fields.forEach(name => {
+      const field = document.createElement("div");
+      field.className = "field";
+      field.innerHTML = `<label for="${name}">${name}</label><input type="number" step="any" id="${name}" required />`;
+      row.appendChild(field);
+    });
+    group.appendChild(row);
+    container.appendChild(group);
+  });
+}
+
+function loadPreset(kind) {
+  const preset = PRESETS[kind];
+  FEATURES.forEach(name => { document.getElementById(name).value = preset[name]; });
+}
+
+function statusClass(status) {
+  if (status === "healthy") return "st-healthy";
+  if (status === "warning") return "st-warning";
+  return "st-critical";
+}
+
+function setNeedle(value) {
+  const clamped = Math.max(0, Math.min(RUL_CAP, value));
+  const angle = -90 + (clamped / RUL_CAP) * 180;
+  document.getElementById("needle").style.transform = `rotate(${angle}deg)`;
+}
+
+async function handlePredict() {
+  const btn = document.getElementById("submit-btn");
+  const resultArea = document.getElementById("result-area");
+
+  const payload = {};
+  for (const name of FEATURES) {
+    const val = document.getElementById(name).value;
+    if (val === "") {
+      resultArea.innerHTML = `<div class="error-box">MISSING FIELD: ${name}</div>`;
+      return;
+    }
+    payload[name] = parseFloat(val);
+  }
+
+  btn.disabled = true;
+  btn.textContent = "RUNNING\u2026";
+  resultArea.innerHTML = `<div class="placeholder">CONTACTING MODEL\u2026</div>`;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.detail || `Server error (${res.status})`);
+    }
+
+    const data = await res.json();
+    setNeedle(data.predicted_rul);
+
+    resultArea.innerHTML = `
+      <div class="readout">${data.predicted_rul}</div>
+      <div class="readout-unit">cycles remaining</div>
+      <div class="status-line ${statusClass(data.status)}"><span class="dot"></span>${data.status}</div>
+      <div class="message">${data.message}</div>
+    `;
+  } catch (err) {
+    resultArea.innerHTML = `<div class="error-box">
+      CONNECTION FAILED &mdash; is the backend running at 127.0.0.1:8000?<br><br>${err.message}
+    </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Run Prediction";
+  }
+}
+
+buildForm();
+loadPreset("healthy");
+setNeedle(0);
+</script>
+</body>
+</html>
